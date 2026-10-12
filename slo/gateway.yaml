@@ -1,0 +1,35 @@
+apiVersion: pyrra.dev/v1alpha1
+kind: ServiceLevelObjective
+metadata:
+  name: gateway-availability
+  namespace: shopflow
+  labels:
+    service: api-gateway
+    tier: critical
+spec:
+  target: "99.9"
+  window: 30d
+  description: "99.9% of user requests to ShopFlow must return non-5xx within 30 days."
+  indicator:
+    ratio:
+      errors:
+        metric: http_requests_total{service="api-gateway", status_code=~"5.."}[1m]
+      total:
+        metric: http_requests_total{service="api-gateway"}[1m]
+  alerts:
+    - name: CheckoutAvailabilityBurnRate14.4x
+      short:
+        window: 5m
+        burnRate: 14.4
+      long:
+        window: 1h
+        burnRate: 14.4
+      severity: critical
+    - name: CheckoutAvailabilityBurnRate6x
+      short:
+        window: 30m
+        burnRate: 6.0
+      long:
+        window: 6h
+        burnRate: 6.0
+      severity: critical

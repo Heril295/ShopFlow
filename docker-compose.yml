@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: shopflow
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: order_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    depends_on: [order-service, catalog-service]
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "8081:8081"
+      - "9001:9001"
+    depends_on: [postgres, rabbitmq, inventory-service, payment-service]
+
+  payment-service:
+    build: ./services/payment-service
+    ports:
+      - "8082:8082"
+      - "9002:9002"
+
+  catalog-service:
+    build: ./services/catalog-service
+    ports:
+      - "8083:8083"
+      - "9003:9003"
+    depends_on: [redis, postgres]
+
+  inventory-service:
+    build: ./services/inventory-service
+    ports:
+      - "8084:8084"
+      - "9004:9004"
+    depends_on: [postgres]
+
+  notification-worker:
+    build: ./services/notification-worker
+    depends_on: [rabbitmq]
+
+  alert-sink:
+    build: ./services/alert-sink
+    ports:
+      - "9099:9099"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.98.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otel-collector.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8889:8889"
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    ports:
+      - "3001:3000"
+
+volumes:
+  pgdata:
