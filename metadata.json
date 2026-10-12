@@ -1,0 +1,6 @@
+{
+  "name": "ShopFlow - Reliability & SLO Platform",
+  "description": "Multi-service e-commerce reliability testing, fault injection engine, OpenTelemetry distributed tracing, and Pyrra SLO observability control center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
